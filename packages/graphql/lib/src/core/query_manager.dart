@@ -1,22 +1,19 @@
 import 'dart:async';
 
-import 'package:meta/meta.dart';
 import 'package:collection/collection.dart';
-
 import 'package:gql_exec/gql_exec.dart';
 import 'package:gql_link/gql_link.dart' show Link;
-
 import 'package:graphql/src/cache/cache.dart';
-import 'package:graphql/src/core/observable_query.dart';
 import 'package:graphql/src/core/_base_options.dart';
+import 'package:graphql/src/core/_query_write_handling.dart';
 import 'package:graphql/src/core/mutation_options.dart';
+import 'package:graphql/src/core/observable_query.dart';
+import 'package:graphql/src/core/policies.dart';
 import 'package:graphql/src/core/query_options.dart';
 import 'package:graphql/src/core/query_result.dart';
-import 'package:graphql/src/core/policies.dart';
 import 'package:graphql/src/exceptions.dart';
 import 'package:graphql/src/scheduler/scheduler.dart';
-
-import 'package:graphql/src/core/_query_write_handling.dart';
+import 'package:meta/meta.dart';
 
 bool Function(dynamic a, dynamic b) _deepEquals =
     const DeepCollectionEquality().equals;
@@ -123,7 +120,13 @@ class QueryManager {
     }
   }
 
-  Future<QueryResult> query(QueryOptions options) => fetchQuery('0', options);
+  Future<QueryResult> query(QueryOptions options) async {
+    final result = await fetchQuery('0', options);
+
+    maybeRebroadcastQueries();
+
+    return result;
+  }
 
   Future<QueryResult> mutate(MutationOptions options) async {
     final result = await fetchQuery('0', options);
